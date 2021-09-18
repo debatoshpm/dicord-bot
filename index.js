@@ -1,12 +1,13 @@
 const Discord = require("discord.js");
-const client = new Discord.Client({ intents: ["GUILDS", "GUILD_MESSAGES"] });
-// const ytdl = require("ytdl-core");
+const client = new Discord.Client({
+  intents: ["GUILDS", "GUILD_MESSAGES", "GUILD_VOICE_STATES"],
+  partials: [],
+});
 const fs = require("fs");
 require("dotenv").config();
 
 const PREFIX = "$";
 
-// var servers = {};
 client.commands = new Discord.Collection();
 const commandFiles = fs
   .readdirSync("./commands/")
@@ -16,9 +17,9 @@ for (const file of commandFiles) {
   client.commands.set(command.name, command);
 }
 
-client.on("ready", () => {
+client.once("ready", () => {
   console.log("Bot is online!!");
-  client.user.setActivity("Try Harding......", { type: "CUSTOM" });
+  client.user.setActivity("Try Harding...");
 });
 
 client.on("messageCreate", (message) => {
@@ -42,46 +43,16 @@ client.on("messageCreate", (message) => {
         client.commands.get("attachment").execute(message, args);
         break;
 
-      // case "play": {
-      //   function play(connection, message) {
-      //     var server = servers[message.guild.id];
-      //     server.dispatcher = connection.playStream(
-      //       ytdl(server.queue[0], { filter: "audioonly" })
-      //     );
+      case "help":
+        client.commands.get("help").execute(message, args);
+        break;
 
-      //     server.queue.shift();
+      case "play":
+        client.commands.get("play").execute(message, args);
+        break;
 
-      //     server.diuspatcher.on("end", function () {
-      //       if (server.queue[0]) {
-      //         play(connection, message);
-      //       } else {
-      //         connection.disconnect();
-      //       }
-      //     });
-      //   }
-
-      //   if (!args[1]) {
-      //     message.channel.send("you need to enter the link");
-      //     return;
-      //   }
-      //   if (!message.member.voice) {
-      //     message.channel.send("You need to be in a channel to play music!");
-      //     return;
-      //   }
-
-      //   if (!servers[message.guild.id])
-      //     servers[message.guild.id] = { queue: [] };
-
-      //   var server = servers[message.guild.id];
-
-      //   server.queue.push(args[1]);
-
-      //   //depreciation not handled
-      //   if (!message.guild.voiceStates)
-      //     message.member.voice.setChannel().then(function (connection) {
-      //       play(connection, message);
-      //     });
-      // }
+      case "leave":
+        client.commands.get("leave").execute(message, args);
     }
   }
 });
