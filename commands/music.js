@@ -92,9 +92,11 @@ const videoPlayer = async (guild, song) => {
   const songQueue = queue.get(guild.id);
 
   if (!song) {
-    songQueue.player.stop();
-    songQueue.connection.destroy();
-    queue.delete(guild.id);
+    if (songQueue.connection) {
+      songQueue.player.stop();
+      songQueue.connection.destroy();
+    }
+    if (queue.has(message.guild.id)) queue.delete(guild.id);
     return;
   }
 
@@ -145,7 +147,10 @@ const unpauseSong = (message, serverQueue) => {
 };
 
 const stopSong = (message, serverQueue) => {
-  serverQueue.songs = [];
-  serverQueue.player.stop();
-  serverQueue.connection.destroy();
+  if (queue.has(message.guild.id)) queue.delete(message.guild.id);
+  if (serverQueue.connection) {
+    serverQueue.player.stop();
+    serverQueue.connection.destroy();
+    message.channel.send("Leaving channel :smiling_face_with_tear:");
+  }
 };

@@ -67,8 +67,8 @@ client.on("messageCreate", (message) => {
         client.commands.get("music").execute(message, args, "unpause");
         break;
 
-      case "leave":
-        client.commands.get("music").execute(message, args, "leave");
+      case "stop":
+        client.commands.get("music").execute(message, args, "stop");
     }
   }
 });
