@@ -7,6 +7,7 @@ const fs = require("fs");
 require("dotenv").config();
 
 const PREFIX = "$";
+let queue = [];
 
 client.commands = new Discord.Collection();
 const commandFiles = fs
@@ -48,11 +49,26 @@ client.on("messageCreate", (message) => {
         break;
 
       case "play":
-        client.commands.get("play").execute(message, args);
+        client.commands.get("music").execute(message, args, "play");
+        break;
+
+      case "skip":
+        client.commands.get("music").execute(message, args, "skip");
+
+      case "queue":
+        client.commands.get("music").execute(message, args, "queue");
+        break;
+
+      case "pause":
+        client.commands.get("music").execute(message, args, "pause");
+        break;
+
+      case "unpause":
+        client.commands.get("music").execute(message, args, "unpause");
         break;
 
       case "leave":
-        client.commands.get("leave").execute(message, args);
+        client.commands.get("music").execute(message, args, "leave");
     }
   }
 });

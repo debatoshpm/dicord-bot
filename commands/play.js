@@ -4,13 +4,13 @@ const {
   joinVoiceChannel,
   createAudioPlayer,
   createAudioResource,
-  demuxProbe,
+  AudioPlayerStatus,
 } = require("@discordjs/voice");
 
 module.exports = {
   name: "play",
   description: "",
-  async execute(message, args) {
+  async execute(message, args, queue) {
     const voiceChannel = message.member.voice.channel;
     if (!voiceChannel)
       return message.channel.send(
@@ -37,17 +37,24 @@ module.exports = {
     });
 
     if (video) {
+      queue.push(video);
       const stream = ytdl(video.url, {
         filter: "audioonly",
         opusEncoded: true,
         bitrate: 320,
         quality: "highestaudio",
         liveBuffer: 40000,
+        highWaterMark: 512 * 2 * 1024,
       });
       let resource = createAudioResource(stream);
       const player = createAudioPlayer();
       player.play(resource);
       connection.subscribe(player);
+
+      player.on(AudioPlayerStatus.Idle, () => {
+        player.stop();
+        connection.destroy();
+      });
 
       await message.reply(`:thumbsup: Now Playing ***${video.title}***`);
     } else {
