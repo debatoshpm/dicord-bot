@@ -23,6 +23,11 @@ module.exports = {
         value:
           "**$play**: plays a song or adds to queue\n**$skip**: skips the current song\n**$queue**: shows the current queue list\n**$pause**: pauses the audio player\n**$unpause**: unpauses the audio player\n**$stop**: stops the player or resets it.",
       })
+      .addFields({
+        name: "Invite this bot to your server!!",
+        value:
+          "https://discord.com/api/oauth2/authorize?client_id=887749678584705105&permissions=8&scope=bot",
+      })
       .setTimestamp()
       .setFooter("https://debatoshpm.github.io/");
     message.channel.send({ embeds: [Embed] });

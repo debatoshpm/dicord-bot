@@ -11,7 +11,7 @@ const queue = new Map();
 
 module.exports = {
   name: "music",
-  aliases: ["skip", "queue", "pause", "unpause", "stop"],
+  aliases: ["play", "skip", "queue", "pause", "unpause", "stop"],
   description: "music bot",
   async execute(message, args, cmd) {
     const voiceChannel = message.member.voice.channel;
@@ -25,7 +25,7 @@ module.exports = {
 
     const serverQueue = queue.get(message.guild.id);
     if (cmd === "play") {
-      if (!args.length)
+      if (args.length <= 1)
         return message.channel.send("You need to send the second parameter!");
       let songs = {};
 
@@ -92,11 +92,13 @@ const videoPlayer = async (guild, song) => {
   const songQueue = queue.get(guild.id);
 
   if (!song) {
-    if (songQueue.connection) {
-      songQueue.player.stop();
-      songQueue.connection.destroy();
+    if (songQueue) {
+      if (songQueue.connection) {
+        songQueue.player.stop();
+        songQueue.connection.destroy();
+      }
     }
-    if (queue.has(message.guild.id)) queue.delete(guild.id);
+    if (queue.has(guild.id)) queue.delete(guild.id);
     return;
   }
 
@@ -112,6 +114,18 @@ const videoPlayer = async (guild, song) => {
     songQueue.songs.shift();
     videoPlayer(guild, songQueue.songs[0]);
   });
+
+  songQueue.player.on("error", (error) => {
+    console.log(
+      `Error: ${error.message} with resource ${error.resource.metadata.title}`
+    );
+    songQueue.textChannel.send(
+      `Error occured while playing ${song.title}!! Please try again.`
+    );
+    songQueue.songs.shift();
+    videoPlayer(guild, songQueue.songs[0]);
+  });
+
   await songQueue.textChannel.send(
     `:thumbsup: Now Playing ***${song.title}***`
   );
@@ -137,20 +151,29 @@ const queueInfo = (message, serverQueue) => {
 };
 
 const pauseSong = (message, serverQueue) => {
-  serverQueue.player.pause();
-  message.channel.send("Audio player paused");
+  if (!serverQueue) message.channel.send("No song is playing");
+  else {
+    serverQueue.player.pause();
+    message.channel.send("Audio player paused");
+  }
 };
 
 const unpauseSong = (message, serverQueue) => {
-  serverQueue.player.unpause();
-  message.channel.send("Audio player unpaused");
+  if (!serverQueue) message.channel.send("No song is playing");
+  else {
+    serverQueue.player.unpause();
+    message.channel.send("Audio player unpaused");
+  }
 };
 
 const stopSong = (message, serverQueue) => {
   if (queue.has(message.guild.id)) queue.delete(message.guild.id);
-  if (serverQueue.connection) {
-    serverQueue.player.stop();
-    serverQueue.connection.destroy();
-    message.channel.send("Leaving channel :smiling_face_with_tear:");
+  if (!serverQueue) message.channel.send("No song is playing");
+  else {
+    if (serverQueue.connection) {
+      serverQueue.player.stop();
+      serverQueue.connection.destroy();
+      message.channel.send("Leaving channel :smiling_face_with_tear:");
+    }
   }
 };

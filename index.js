@@ -7,7 +7,6 @@ const fs = require("fs");
 require("dotenv").config();
 
 const PREFIX = "$";
-let queue = [];
 
 client.commands = new Discord.Collection();
 const commandFiles = fs
@@ -69,6 +68,12 @@ client.on("messageCreate", (message) => {
 
       case "stop":
         client.commands.get("music").execute(message, args, "stop");
+        break;
+
+      case "servers":
+        const Guilds = client.guilds.cache.map((guild) => guild.name);
+        message.channel.send("Active Servers:\n-> " + Guilds.join("\n-> "));
+        break;
     }
   }
 });
