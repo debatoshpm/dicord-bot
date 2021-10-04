@@ -115,9 +115,6 @@ const videoPlayer = async (guild, song) => {
   });
 
   songQueue.player.on("error", (error) => {
-    console.log(
-      `Error: ${error.message} with resource ${error.resource.metadata.title}`
-    );
     songQueue.textChannel.send(
       `Error occured while playing!! Please try again.`
     );
