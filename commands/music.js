@@ -104,7 +104,6 @@ const videoPlayer = async (guild, song) => {
 
   const stream = ytdl(song.url, {
     filter: "audioonly",
-    opusEncoded: true,
     quality: "highestaudio",
   });
   let resource = createAudioResource(stream);
@@ -120,7 +119,7 @@ const videoPlayer = async (guild, song) => {
       `Error: ${error.message} with resource ${error.resource.metadata.title}`
     );
     songQueue.textChannel.send(
-      `Error occured while playing ${song.title}!! Please try again.`
+      `Error occured while playing!! Please try again.`
     );
     songQueue.songs.shift();
     videoPlayer(guild, songQueue.songs[0]);
