@@ -29,11 +29,11 @@ module.exports = {
         return message.channel.send("You need to send the second parameter!");
       let songs = {};
 
-      if (ytdl.validateURL(args[0])) {
-        const songInfo = await ytdl.getInfo(args[0]);
+      if (ytdl.validateURL(args[1])) {
+        const songInfo = await ytdl.getInfo(args[1]);
         song = {
-          title: song_info.videoDetails.title,
-          url: song_info.videoDetails.video_url,
+          title: songInfo.videoDetails.title,
+          url: songInfo.videoDetails.video_url,
         };
       } else {
         const videoFinder = async (query) => {
@@ -41,11 +41,13 @@ module.exports = {
           return videoResult.videos.length > 1 ? videoResult.videos[0] : null;
         };
 
-        const video = await videoFinder(args.join(" "));
+        const [_, ...rest] = args;
+        const video = await videoFinder(rest.join(" "));
+
         if (video) {
           song = { title: video.title, url: video.url };
         } else {
-          message.channel.send("No search results");
+          return message.channel.send("No search results");
         }
       }
       if (!serverQueue) {
@@ -104,7 +106,11 @@ const videoPlayer = async (guild, song) => {
 
   const stream = ytdl(song.url, {
     filter: "audioonly",
+    opusEncoded: true,
+    bitrate: 320,
     quality: "highestaudio",
+    liveBuffer: 40000,
+    highWaterMark: 512 * 8 * 1024,
   });
   let resource = createAudioResource(stream);
   songQueue.player.play(resource);
