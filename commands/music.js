@@ -24,65 +24,9 @@ module.exports = {
       return message.channel.send("You do not have the right permissions");
 
     const serverQueue = queue.get(message.guild.id);
-    if (cmd === "play") {
-      if (args.length <= 1)
-        return message.channel.send("You need to send the second parameter!");
-      let songs = {};
 
-      if (ytdl.validateURL(args[1])) {
-        const songInfo = await ytdl.getInfo(args[1]);
-        song = {
-          title: songInfo.videoDetails.title,
-          url: songInfo.videoDetails.video_url,
-        };
-      } else {
-        const videoFinder = async (query) => {
-          const videoResult = await ytSearch(query);
-          return videoResult.videos.length > 1 ? videoResult.videos[0] : null;
-        };
-
-        const [_, ...rest] = args;
-        const video = await videoFinder(rest.join(" "));
-
-        if (video) {
-          song = { title: video.title, url: video.url };
-        } else {
-          return message.channel.send("No search results");
-        }
-      }
-      if (!serverQueue) {
-        const queueConstructor = {
-          voiceChannel: voiceChannel,
-          textChannel: message.channel,
-          connection: null,
-          player: null,
-          songs: [],
-        };
-        queue.set(message.guild.id, queueConstructor);
-        queueConstructor.songs.push(song);
-
-        try {
-          const connection = joinVoiceChannel({
-            channelId: voiceChannel.id,
-            guildId: voiceChannel.guild.id,
-            adapterCreator: voiceChannel.guild.voiceAdapterCreator,
-          });
-          const player = createAudioPlayer();
-          queueConstructor.connection = connection;
-          queueConstructor.player = player;
-          videoPlayer(message.guild, queueConstructor.songs[0]);
-        } catch (err) {
-          queue.delete(message.guild.id);
-          message.channel.send("There was an error connecting");
-          throw err;
-        }
-      } else {
-        serverQueue.songs.push(song);
-        return message.channel.send(
-          `:thumbsup: Added to queue ***${song.title}***`
-        );
-      }
-    } else if (cmd === "skip") skipSong(message, serverQueue);
+    if (cmd === "play") playSong(message, args, voiceChannel, serverQueue);
+    else if (cmd === "skip") skipSong(message, serverQueue);
     else if (cmd === "queue") queueInfo(message, serverQueue);
     else if (cmd === "pause") pauseSong(message, serverQueue);
     else if (cmd === "unpause") unpauseSong(message, serverQueue);
@@ -90,7 +34,69 @@ module.exports = {
   },
 };
 
-const videoPlayer = async (guild, song) => {
+const playSong = async (message, args, voiceChannel, serverQueue) => {
+  if (args.length <= 1)
+    return message.channel.send("You need to send the second parameter!");
+
+  const [_, ...rest] = args;
+
+  let song = {};
+  if (ytdl.validateURL(rest)) {
+    const songInfo = await ytdl.getInfo(rest);
+    song = {
+      title: songInfo.videoDetails.title,
+      url: songInfo.videoDetails.video_url,
+    };
+  } else {
+    const videoFinder = async (query) => {
+      const videoResult = await ytSearch(query);
+      return videoResult.videos.length > 1 ? videoResult.videos[0] : null;
+    };
+
+    const video = await videoFinder(rest.join(" "));
+
+    if (video) {
+      song = { title: video.title, url: video.url };
+    } else {
+      return message.channel.send("No search results");
+    }
+  }
+
+  if (!serverQueue) {
+    const queueConstructor = {
+      voiceChannel: voiceChannel,
+      textChannel: message.channel,
+      connection: null,
+      player: null,
+      songs: [],
+    };
+    queue.set(message.guild.id, queueConstructor);
+    queueConstructor.songs.push(song);
+
+    try {
+      const connection = joinVoiceChannel({
+        channelId: voiceChannel.id,
+        guildId: voiceChannel.guild.id,
+        adapterCreator: voiceChannel.guild.voiceAdapterCreator,
+      });
+      const player = createAudioPlayer();
+      queueConstructor.connection = connection;
+      queueConstructor.player = player;
+      videoPlayer(message.guild, queueConstructor.songs[0]);
+    } catch (err) {
+      queue.delete(message.guild.id);
+      message.channel.send("There was an error connecting");
+      throw err;
+    }
+  } else {
+    serverQueue.songs.push(song);
+    return message.channel.send(
+      `:thumbsup: Added to queue ***${song.title}***`
+    );
+  }
+};
+
+const videoPlayer = (guild, song) => {
   const songQueue = queue.get(guild.id);
 
   if (!song) {
@@ -128,9 +134,7 @@ const videoPlayer = async (guild, song) => {
     videoPlayer(guild, songQueue.songs[0]);
   });
 
-  await songQueue.textChannel.send(
-    `:thumbsup: Now Playing ***${song.title}***`
-  );
+  songQueue.textChannel.send(`:thumbsup: Now Playing ***${song.title}***`);
 };
 
 const skipSong = (message, serverQueue) => {
