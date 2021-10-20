@@ -53,6 +53,7 @@ client.on("messageCreate", (message) => {
 
       case "skip":
         client.commands.get("music").execute(message, args, "skip");
+        break;
 
       case "queue":
         client.commands.get("music").execute(message, args, "queue");
@@ -68,6 +69,10 @@ client.on("messageCreate", (message) => {
 
       case "stop":
         client.commands.get("music").execute(message, args, "stop");
+        break;
+
+      case "playlist":
+        client.commands.get("music").execute(message, args, "playlist");
         break;
 
       case "servers":

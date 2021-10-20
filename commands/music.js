@@ -1,3 +1,4 @@
+const axios = require("axios");
 const ytdl = require("ytdl-core");
 const ytSearch = require("yt-search");
 const {
@@ -31,6 +32,8 @@ module.exports = {
     else if (cmd === "pause") pauseSong(message, serverQueue);
     else if (cmd === "unpause") unpauseSong(message, serverQueue);
     else if (cmd === "stop") stopSong(message, serverQueue);
+    else if (cmd === "playlist")
+      playPlaylist(message, args, voiceChannel, serverQueue);
   },
 };
 
@@ -38,7 +41,7 @@ const playSong = async (message, args, voiceChannel, serverQueue) => {
   if (args.length <= 1)
     return message.channel.send("You need to send the second parameter!");
 
-  const [_, ...rest] = args;
+  const [, ...rest] = args;
 
   let song = {};
   if (ytdl.validateURL(rest)) {
@@ -149,7 +152,7 @@ const queueInfo = (message, serverQueue) => {
     return message.channel.send("There are no songs in the queue");
   if (!serverQueue.songs)
     return message.channel.send("There are no songs in the queue");
-  title = [];
+  let title = [];
   serverQueue.songs.forEach((element) => {
     title.push(element.title);
   });
@@ -182,4 +185,49 @@ const stopSong = (message, serverQueue) => {
       message.channel.send("Leaving channel :smiling_face_with_tear:");
     }
   }
+};
+
+const playPlaylist = (message, args, voiceChannel, serverQueue) => {
+  axios.get(`http://localhost:3000/getplaylist/${args[1]}`).then((res) => {
+    const song = JSON.parse(res.data[0].songs);
+    if (!serverQueue) {
+      const queueConstructor = {
+        voiceChannel: voiceChannel,
+        textChannel: message.channel,
+        connection: null,
+        player: null,
+        songs: [],
+      };
+      queue.set(message.guild.id, queueConstructor);
+      song.forEach((el) => {
+        queueConstructor.songs.push(el);
+      });
+
+      try {
+        const connection = joinVoiceChannel({
+          channelId: voiceChannel.id,
+          guildId: voiceChannel.guild.id,
+          adapterCreator: voiceChannel.guild.voiceAdapterCreator,
+        });
+        const player = createAudioPlayer();
+        queueConstructor.connection = connection;
+        queueConstructor.player = player;
+        message.channel.send(
+          `:thumbsup: Playlist Added ${res.data[0].name}***`
+        );
+        videoPlayer(message.guild, queueConstructor.songs[0]);
+      } catch (err) {
+        queue.delete(message.guild.id);
+        message.channel.send("There was an error connecting");
+        throw err;
+      }
+    } else {
+      song.forEach((el) => {
+        serverQueue.songs.push(el);
+      });
+      return message.channel.send(
+        `:thumbsup: Playlist Added to Queue: ${res.data[0].name}***`
+      );
+    }
+  });
 };
