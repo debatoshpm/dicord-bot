@@ -1,6 +1,5 @@
 const axios = require("axios");
 const ytdl = require("ytdl-core");
-const ytSearch = require("yt-search");
 const {
   joinVoiceChannel,
   createAudioPlayer,
@@ -44,25 +43,20 @@ const playSong = async (message, args, voiceChannel, serverQueue) => {
   const [, ...rest] = args;
 
   let song = {};
-  if (ytdl.validateURL(rest)) {
-    const songInfo = await ytdl.getInfo(rest);
-    song = {
-      title: songInfo.videoDetails.title,
-      url: songInfo.videoDetails.video_url,
-    };
+  const getVideoInfo = async (query) => {
+    return axios
+      .post(`http://localhost:3000/getVideoData`, { data: query })
+      .then((res) => {
+        return res.data;
+      });
+  };
+
+  const video = await getVideoInfo(rest);
+
+  if (video) {
+    song = { title: video.title, url: video.url };
   } else {
-    const videoFinder = async (query) => {
-      const videoResult = await ytSearch(query);
-      return videoResult.videos.length > 1 ? videoResult.videos[0] : null;
-    };
-
-    const video = await videoFinder(rest.join(" "));
-
-    if (video) {
-      song = { title: video.title, url: video.url };
-    } else {
-      return message.channel.send("No search results");
-    }
+    return message.channel.send("No search results");
   }
 
   if (!serverQueue) {
