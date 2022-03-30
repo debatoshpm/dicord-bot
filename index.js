@@ -1,3 +1,4 @@
+const keepAlive = require("./server");
 const Discord = require("discord.js");
 const client = new Discord.Client({
   intents: ["GUILDS", "GUILD_MESSAGES", "GUILD_VOICE_STATES"],
@@ -83,4 +84,5 @@ client.on("messageCreate", (message) => {
   }
 });
 
+keepAlive();
 client.login(process.env.TOKEN);
