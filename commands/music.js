@@ -4,14 +4,13 @@ const {
   joinVoiceChannel,
   createAudioPlayer,
   createAudioResource,
-  AudioPlayerStatus,
 } = require("@discordjs/voice");
 
 const queue = new Map();
 
 module.exports = {
   name: "music",
-  aliases: ["play", "skip", "queue", "pause", "unpause", "stop"],
+  aliases: ["play", "skip", "queue", "pause", "unpause", "stop", "playlist"],
   description: "music bot",
   async execute(message, args, cmd) {
     const voiceChannel = message.member.voice.channel;
@@ -45,7 +44,7 @@ const playSong = async (message, args, voiceChannel, serverQueue) => {
   let song = {};
   const getVideoInfo = async (query) => {
     return axios
-      .post(`http://localhost:3000/getVideoData`, { data: query })
+      .post(`http://localhost:5000/getVideoData`, { data: query })
       .then((res) => {
         return res.data;
       });
@@ -182,7 +181,7 @@ const stopSong = (message, serverQueue) => {
 };
 
 const playPlaylist = (message, args, voiceChannel, serverQueue) => {
-  axios.get(`http://localhost:3000/getplaylist/${args[1]}`).then((res) => {
+  axios.get(`http://localhost:5000/getplaylist/${args[1]}`).then((res) => {
     const song = JSON.parse(res.data[0].songs);
     if (!serverQueue) {
       const queueConstructor = {

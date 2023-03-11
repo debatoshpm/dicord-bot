@@ -1,15 +1,30 @@
-const keepAlive = require("./server");
-const Discord = require("discord.js");
-const client = new Discord.Client({
-  intents: ["GUILDS", "GUILD_MESSAGES", "GUILD_VOICE_STATES"],
-  partials: [],
-});
+const {
+  Client,
+  IntentsBitField,
+  Collection,
+  ActivityType,
+  Events,
+} = require("discord.js");
 const fs = require("fs");
+const express = require("express");
+const cors = require("cors");
 require("dotenv").config();
+
+const server = express();
+server.use(cors());
+
+const client = new Client({
+  intents: [
+    IntentsBitField.Flags.Guilds,
+    IntentsBitField.Flags.GuildMembers,
+    IntentsBitField.Flags.GuildMessages,
+    IntentsBitField.Flags.MessageContent,
+  ],
+});
 
 const PREFIX = "$";
 
-client.commands = new Discord.Collection();
+client.commands = new Collection();
 const commandFiles = fs
   .readdirSync("./commands/")
   .filter((file) => file.endsWith(".js"));
@@ -18,12 +33,14 @@ for (const file of commandFiles) {
   client.commands.set(command.name, command);
 }
 
-client.once("ready", () => {
+client.once(Events.ClientReady, () => {
   console.log("Bot is online!!");
-  client.user.setActivity("Try Harding...");
+  client.user.setActivity("'$help' for more details", {
+    type: ActivityType.Listening,
+  });
 });
 
-client.on("messageCreate", (message) => {
+client.on(Events.MessageCreate, (message) => {
   let args = message.content.substring(PREFIX.length).split(" ");
   if (message.author.bot) return;
   if (message.content.startsWith(PREFIX)) {
@@ -84,5 +101,12 @@ client.on("messageCreate", (message) => {
   }
 });
 
-keepAlive();
+server.all("/", (req, res) => {
+  res.send("Bot is running!");
+});
+
+server.listen(3000, () => {
+  console.log("Bot is ready.");
+});
+
 client.login(process.env.TOKEN);
